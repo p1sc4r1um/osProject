@@ -56,7 +56,8 @@ int main(int argc, char *argv[]) {
 	shared_var = (Stats *) shmat(shmid,NULL,0);
 	create_triages(triage);
 	create_doctors(doctors, shmid, shift_length);
-  	return 0;
+	printf("total = %d", (*shared_var).total_treated);
+	return 0;
 
 
 }

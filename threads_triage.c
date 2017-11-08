@@ -7,7 +7,10 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void *triage_work(void* id_ptr) {
-	while(1) {
+	int id = *((int*)id_ptr);
+	printf("New triage %d\n", id);
+
+	while(false) {
 		pthread_mutex_lock(&mutex);
 		//////TRIAGE
 		//////STATS WRITE

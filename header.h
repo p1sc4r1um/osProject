@@ -29,7 +29,7 @@ typedef struct stats {
 	int total_triage, total_treated, average_before_triage, average_after_triage, average_all;
 }Stats;
 
-#define DEBUG
+//#define DEBUG
 
 Stats *shared_var;
 
