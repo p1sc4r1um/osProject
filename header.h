@@ -1,5 +1,6 @@
 #ifndef HEADER_H_INCLUDED
 #define HEADER_H_INCLUDED
+#define PIPE_NAME   "input_pipe"
 /*LIBRARIES*/
 
 #include <pthread.h>
@@ -11,19 +12,23 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include  <sys/types.h>
-#include  <sys/ipc.h>
-#include  <sys/shm.h>
-#include  <stdio.h>
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <stdio.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /*STRUCTS*/
 
 typedef struct patient {
-	char name [50], triageNum [50], attendanceNum [50], priority [50];
-	clock_t start, end_triage;
+	char name [50];
+	int triageNum, attendanceNum, triagems, attendancems, priority;
+	clock_t start, begin_triage, begin_attendance;
 }Patient;
+
 
 typedef struct stats {
 	int total_triage, total_treated, average_before_triage, average_after_triage, average_all;
@@ -35,6 +40,7 @@ Stats *shared_var;
 
 
 /*FUNCTIONS*/
+void force_exit();
 int read_config(int *triage,int *doctors,int *shift_length,int *mq_max);
 
 int shared_memory_stat();

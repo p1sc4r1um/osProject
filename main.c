@@ -41,10 +41,35 @@ AFTER SIGUSR1 SIGNAL, FATHER PROCCESS WRITES THE TOTAL PATIENTS TRIAGE, ATTENDAN
 
 */
 
-
+void force_exit() {
+	printf("exit of process %d\n", getpid());
+	exit(0);
+}
 
 int main(int argc, char *argv[]) {
+
+	/************************/
+	/*****Creates the named pipe if it doesn't exist yet*****/
+	if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
+		perror("Cannot create pie: ");
+		exit(0);
+	}
+	/*****Opens the pipe for reading*********/
+	int fd;
+	if ((fd=open(PIPE_NAME, O_RDWR)) < 0) {
+		perror("Cannot open pipe for reading: ");
+		exit(0);
+	}
+
+	Patient patient;
+  while (1) {
+    read(fd, &patient, sizeof(Patient));
+    printf("[SERVER] Received (name: %s,triage_time: %d ms,attendance_time: %d ms,priority: %d)\n", patient.name, patient.triagems, patient.attendancems, patient.priority);
+  }
+	/******************************/
+
 	int triage, doctors, shift_length, mq_max;
+	signal(SIGINT, force_exit);
 	if(read_config(&triage, &doctors, &shift_length, &mq_max)) {
 		printf("%d, %d, %d, %d\n", triage, doctors, shift_length, mq_max);
 	}
