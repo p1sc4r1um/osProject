@@ -10,14 +10,15 @@ void *triage_work(void* id_ptr) {
 	int id = *((int*)id_ptr);
 	printf("New triage %d\n", id);
 
-	while(false) {
+	//while(get patient) {
 		pthread_mutex_lock(&mutex);
 		//////TRIAGE
 		//////STATS WRITE
-		////if patiens == 0 exit
-		printf("New triage");
+		////if patients == 0 exit
+
+		(*shared_var).total_triage++;
 		pthread_mutex_unlock(&mutex);
-	}
+	//}
 }
 
 int create_triages(int triage) {

@@ -43,13 +43,13 @@ Stats *shared_var;
 void force_exit();
 int read_config(int *triage,int *doctors,int *shift_length,int *mq_max);
 
-int shared_memory_stat();
+int shared_memory_stats();
 
 void *triage_work(void* id_ptr);
 int create_triages(int triage);
 
 void doctor(int shift_length);
-void create_doctors(int doctors, int shmid, int shift_length);
+void create_doctors(int doctors, int shift_length);
 
 
 #endif

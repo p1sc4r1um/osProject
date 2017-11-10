@@ -3,7 +3,7 @@
 #include "header.h"
 
 
-int shared_memory_stat() {
+int shared_memory_stats() {
         int shmid;
 	// Create shared memory
 	if( (shmid = shmget(IPC_PRIVATE,sizeof(Stats),IPC_CREAT|0766)) > 0) {
