@@ -22,7 +22,6 @@ void *triage_work(void* id_ptr) {
 }
 
 int create_triages(int triage) {
-	pthread_t triage_threads[triage];
 	int ids[triage];
 	int i;
 

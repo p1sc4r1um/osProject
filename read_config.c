@@ -21,6 +21,7 @@ int read_config(int *triage,int *doctors,int *shift_length,int *mq_max){
       switch(choose){
         case(1):
           *triage = atoi(value);
+          triage_threads =(pthread_t*) malloc(*triage * sizeof(pthread_t));
           break;
         case(2):
           *doctors = atoi(value);

@@ -37,6 +37,11 @@ typedef struct stats {
 //#define DEBUG
 
 Stats *shared_var;
+int main_pid;
+int doctors, triage, shift_length, mq_max, shmid;
+
+pthread_t *triage_threads;
+
 
 
 /*FUNCTIONS*/

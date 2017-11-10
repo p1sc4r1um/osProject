@@ -41,22 +41,23 @@ AFTER SIGUSR1 SIGNAL, FATHER PROCCESS WRITES THE TOTAL PATIENTS TRIAGE, ATTENDAN
 
 */
 
-int doctors, triage, shift_length, mq_max, shmid;
 
 void force_exit() {
 	int i;
-	for(i = 0; i < doctors; i++) {
-		wait(NULL);
-	}
-	printf("exit of process %d\n", getpid());
+	/*if(getpid() == main_pid) {
+		for (i = 0; i < triage; i++) {
+			pthread_join(triage_threads[i], NULL);
+		}
+	}*/
+	wait(NULL);
 	shmctl(shmid, IPC_RMID, NULL);
 	exit(0);
 }
 
 int main(int argc, char *argv[]) {
 
-	/*
-	//Creates the named pipe if it doesn't exist yet
+
+	/*//Creates the named pipe if it doesn't exist yet
 	if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
 		perror("Cannot create pie: ");
 		exit(0);
@@ -72,8 +73,8 @@ int main(int argc, char *argv[]) {
   while (1) {
     read(fd, &patient, sizeof(Patient));
     printf("[SERVER] Received (name: %s,triage_time: %d ms,attendance_time: %d ms,priority: %d)\n", patient.name, patient.triagems, patient.attendancems, patient.priority);
-  }
-	*/
+  }*/
+	main_pid = getpid();
 	if(read_config(&triage, &doctors, &shift_length, &mq_max)) {
 		printf("%d, %d, %d, %d\n", triage, doctors, shift_length, mq_max);
 	}
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]) {
 		perror("Error while reading the configuration file\n");
 		return 0;
 	}
-	signal(SIGINT, force_exit);
+	signal(SIGINT,force_exit);
 	if(!(shmid = shared_memory_stats())) {
 		perror("Error while creating shared memory\n");
 		return 0;
@@ -90,8 +91,8 @@ int main(int argc, char *argv[]) {
 	create_doctors(doctors, shift_length);
 	printf("\nTotal Triaged: %d\n", (*shared_var).total_triage);
 	printf("\nTotal Treated: %d\n\n", (*shared_var).total_treated);
-	
-	
+
+
 	shmctl(shmid, IPC_RMID, NULL);
 	return 0;
 }

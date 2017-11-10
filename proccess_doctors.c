@@ -13,7 +13,7 @@ void doctor (int shift_length) {
 
 
 	 (*shared_var).total_treated++;
-	 
+
 	 //printf("total treated: %d\n", (*shared_var).total_treated);
 	 /*TODO: solve patient*/
 
@@ -30,6 +30,7 @@ void doctor (int shift_length) {
     #endif
  }
  printf("end of shift of doctor %ld\n", (long)getpid());
+ exit(0);
 }
 
 void create_doctors (int doctors, int shift_length) {
@@ -68,8 +69,8 @@ void create_doctors (int doctors, int shift_length) {
       }
     }
 
-    
-    
+
+
     for (i = 0; i < doctors; i++) {
       wait(NULL);
     }
