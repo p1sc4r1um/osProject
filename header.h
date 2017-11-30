@@ -23,10 +23,12 @@
 
 /*STRUCTS*/
 
+typedef struct patient *ListP;
 typedef struct patient {
 	char name [50];
 	int triageNum, attendanceNum, triagems, attendancems, priority;
 	clock_t start, begin_triage, begin_attendance;
+	ListP next;
 }Patient;
 
 
@@ -39,13 +41,14 @@ typedef struct stats {
 Stats *shared_var;
 int main_pid;
 int doctors, triage, shift_length, mq_max, shmid;
-
+ListP patient_list;
 pthread_t *triage_threads;
-
+pthread_t triage_read_pipe;
 
 
 /*FUNCTIONS*/
 void force_exit();
+void* read_named_pipe();
 int read_config(int *triage,int *doctors,int *shift_length,int *mq_max);
 
 int shared_memory_stats();

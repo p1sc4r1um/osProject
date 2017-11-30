@@ -3,7 +3,7 @@
 #include "header.h"
 
 // sync resources
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; //SEMAFORO
 
 
 void *triage_work(void* id_ptr) {
