@@ -16,7 +16,7 @@ shared_memory_stats.o: shared_memory_stats.c header.h
 	$(CC) $(CFLAGS) -c shared_memory_stats.c
 threads_triage.o: threads_triage.c header.h
 	$(CC) $(CFLAGS) -c threads_triage.c
-clean:	
+clean:
 	rm -rf *.o
 
 mrproper:	clean

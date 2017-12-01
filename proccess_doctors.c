@@ -11,8 +11,9 @@ void doctor (int shift_length) {
 	 end = clock();
 	 shift_time = (double)(end - start) / CLOCKS_PER_SEC;
 
-
+	 sem_wait(mutex);
 	 (*shared_var).total_treated++;
+	 sem_post(mutex);
 
 	 //printf("total treated: %d\n", (*shared_var).total_treated);
 	 /*TODO: solve patient*/

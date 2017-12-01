@@ -41,7 +41,19 @@ AFTER SIGUSR1 SIGNAL, FATHER PROCCESS WRITES THE TOTAL PATIENTS TRIAGE, ATTENDAN
 
 */
 
-
+void put_in_list(ListP node) {
+	ListP temp = patient_list;
+	if(temp != NULL) {
+		while(temp->next != NULL) {
+			temp = temp->next;
+		}
+		temp->next = temp;
+	}
+	else {
+		patient_list = node;
+		pthread_cond_signal(&count_threshold_cv);
+	}
+}
 
 
 void force_exit() {
@@ -51,13 +63,13 @@ void force_exit() {
 			pthread_join(triage_threads[i], NULL);
 		}
 	}*/
+	sem_close(mutex);
 	wait(NULL);
 	shmctl(shmid, IPC_RMID, NULL);
 	exit(0);
 }
 
 void* read_named_pipe () {
-	fd_set read_set;
 	//Creates the named pipe if it doesn't exist yet
 	if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
 		perror("Cannot create pipe: ");
@@ -65,56 +77,39 @@ void* read_named_pipe () {
 	}
 	//Opens the pipe for reading
 	int fd;
-	if ((fd=open(PIPE_NAME, O_RDONLY)) < 0) {
+	if ((fd=open(PIPE_NAME, O_RDWR)) < 0) {
 		perror("Cannot open pipe for reading: ");
 		exit(0);
 	}
+
 	ListP node;
 	node = (ListP) malloc(sizeof(Patient));
 	while (1) {
 		read(fd, node, sizeof(Patient));
-		printf("[SERVER] Received (name: %s,triage_time: %d ms,attendance_time: %d ms,priority: %d)\n", node->name, node->triagems, node->attendancems, node->priority);
+		node->next = NULL;
+		put_in_list(node);
+		printf("client %s was put in the list!\n", node->name);
 	}
 }
 
 int main(int argc, char *argv[]) {
+	main_pid = getpid();
+	pthread_mutex_init(&mutex_threads, NULL);
+	pthread_cond_init(&count_threshold_cv, NULL);
+	patient_list = NULL;
+	signal(SIGINT,force_exit);
+	sem_unlink("memory_mutex");
+	mutex = sem_open("memory_mutex", O_CREAT, 777, 1);
 
-
-
-
-	/*ListP node;
-	node = (ListP)malloc(sizeof(Patient));
-	node->triageNum = 1;
-	node->attendanceNum = 1;
-	node->triagems = 0;
-	node->attendancems = 0;
-	node->priority = 1;
-	node->start = 0;
-	node->begin_triage = 0;
-	node->begin_attendance = 0;
-	node->next = NULL;
-	patient_list = (ListP)malloc(sizeof(Patient));
-	patient_list->triageNum = 1;
-	patient_list->attendanceNum = 1;
-	patient_list->triagems = 0;
-	patient_list->attendancems = 0;
-	patient_list->priority = 1;
-	patient_list->start = 0;
-	patient_list->begin_triage = 0;
-	patient_list->begin_attendance = 0;
-	patient_list->next = node;*/
-
+	//create tread to read input_pipe
 	if (pthread_create(&triage_read_pipe, NULL, read_named_pipe, 0) != 0) {
 		perror("Error creating the thread!");
 		exit(0);
 		return 1;
 	}
-	pthread_join(triage_read_pipe, NULL);
+	//pthread_join(triage_read_pipe, NULL);
 
-
-
-	printf("supamos%d\n", patient_list->next->triageNum);
-	main_pid = getpid();
+	//read file
 	if(read_config(&triage, &doctors, &shift_length, &mq_max)) {
 		printf("%d, %d, %d, %d\n", triage, doctors, shift_length, mq_max);
 	}
@@ -122,11 +117,13 @@ int main(int argc, char *argv[]) {
 		perror("Error while reading the configuration file\n");
 		return 0;
 	}
-	signal(SIGINT,force_exit);
+
+	//create shared memory
 	if(!(shmid = shared_memory_stats())) {
 		perror("Error while creating shared memory\n");
 		return 0;
 	}
+
 	create_triages(triage);
 	create_doctors(doctors, shift_length);
 	printf("\nTotal Triaged: %d\n", (*shared_var).total_triage);

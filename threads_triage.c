@@ -3,22 +3,34 @@
 #include "header.h"
 
 // sync resources
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; //SEMAFORO
 
 
 void *triage_work(void* id_ptr) {
+	ListP current = patient_list;
 	int id = *((int*)id_ptr);
 	printf("New triage %d\n", id);
-
-	//while(get patient) {
-		pthread_mutex_lock(&mutex);
-		//////TRIAGE
-		//////STATS WRITE
-		////if patients == 0 exit
-
-		(*shared_var).total_triage++;
-		pthread_mutex_unlock(&mutex);
-	//}
+	while(1) {
+		printf("erterterter\n");
+		pthread_mutex_lock(&mutex_threads);
+		if(patient_list != NULL){
+			printf("xau\n");
+			current = patient_list;
+			patient_list = patient_list->next;
+			current->next = NULL;
+			pthread_mutex_unlock(&mutex_threads);
+			sleep(current->triagems);
+			sem_wait(mutex);
+			printf("patient %s triaged\n", current->name);
+			(*shared_var).total_triage++;
+			sem_post(mutex);
+		}
+		else {
+			printf("skah\n");
+			pthread_mutex_unlock(&mutex_threads);
+			pthread_cond_wait(&count_threshold_cv,&mutex_threads);
+			printf("fshdsf\n");
+		}
+	}
 }
 
 int create_triages(int triage) {

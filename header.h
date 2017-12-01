@@ -44,13 +44,15 @@ int doctors, triage, shift_length, mq_max, shmid;
 ListP patient_list;
 pthread_t *triage_threads;
 pthread_t triage_read_pipe;
+sem_t *mutex;
+pthread_mutex_t mutex_threads;
+pthread_cond_t count_threshold_cv;
 
 
 /*FUNCTIONS*/
 void force_exit();
 void* read_named_pipe();
 int read_config(int *triage,int *doctors,int *shift_length,int *mq_max);
-
 int shared_memory_stats();
 
 void *triage_work(void* id_ptr);
