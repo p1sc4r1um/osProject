@@ -28,7 +28,7 @@ typedef struct patient *ListP;
 typedef struct patient {
 	char name [50];
 	int triageNum, attendanceNum, triagems, attendancems, priority;
-	clock_t start, begin_triage, begin_attendance;
+	clock_t start, begin_triage, end_triage, begin_attendance;
 	ListP next;
 }Patient;
 
@@ -42,7 +42,7 @@ typedef struct stats {
 	double average_before_triage, average_after_triage, average_all;
 }Stats;
 
-//#define DEBUG
+//#define DEBUG 1
 
 Stats *shared_var;
 int main_pid;

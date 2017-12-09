@@ -28,6 +28,7 @@ void *triage_work(void* id_ptr) {
 			printf("tempo %s: %f\n", current->name, (double)time_patient);
 			(*shared_var).average_before_triage = (double)((*shared_var).average_before_triage * ((*shared_var).total_triage-1) + (time_patient * 1000))/(*shared_var).total_triage;
 			sem_post(mutex);
+			current->end_triage = clock();
 			printf("patient %s triaged by triage %d\n", current->name, id);
 
 		}
