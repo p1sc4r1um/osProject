@@ -4,7 +4,6 @@ void create_MQ() {
     perror("error creating MQ!!!\n");
     exit(1);
   }
-  printf("id: %d\n", MQ_id);
 }
 void add_to_MQ(Patient patient) {
   MQ_patient new_node;
@@ -14,5 +13,5 @@ void add_to_MQ(Patient patient) {
     perror("error sending to MQ\n");
     exit(1);
   }
-  printf("%s added to MQ!\n", new_node.info.name);
+  printf("[mq] %s added to MQ!\n", new_node.info.name);
 }

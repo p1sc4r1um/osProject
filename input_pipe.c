@@ -11,14 +11,14 @@
 #include <string.h>
 #include <ctype.h>
 
-#define PIPE_NAME   "input_pipe"
+#define PIPE_NAME "input_pipe"
 #define RAND_MAX 149
 
 typedef struct patient* ListP;
 typedef struct patient {
 	char name [50];
 	int triageNum, attendanceNum, triagems, attendancems, priority;
-	clock_t start, begin_triage, begin_attendance;
+	double start, begin_triage, begin_attendance;
 }Patient;
 
 int is_number(char *string) {
@@ -56,11 +56,8 @@ int main(int argc, char *argv[]) {
 			strcpy(person, names[rand()%RAND_MAX]);
 			strcpy(node->name, person);
 			printf("%s\n", node->name);
-			printf("supamos 2\n");
 			node->triagems = atoi(argv[2]);
-			printf("supamos 3\n");
 			node->attendancems = atoi(argv[3]);
-			printf("supamos 4\n");
 			node->priority = atoi(argv[4]);
 			printf("[PIPE] Sending (name: %s,triage_time: %d ms,attendance_time: %d ms,priority: %d)\n", node->name, node->triagems, node->attendancems, node->priority);
 			write(fd, node, sizeof(Patient));

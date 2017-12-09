@@ -88,7 +88,7 @@ void* read_named_pipe () {
 	node = (ListP) malloc(sizeof(Patient));
 	while (1) {
 		read(fd, node, sizeof(Patient));
-		node->start = clock();
+		node->start = time(NULL);
 		node->next = NULL;
 		put_in_list(node);
 		printf("client %s was put in the list by the pipe!\n", node->name);
@@ -98,6 +98,7 @@ void* read_named_pipe () {
 
 int main(int argc, char *argv[]) {
 	main_pid = getpid();
+	struct timespec tp;
 	pthread_mutex_init(&mutex_threads, NULL);
 	pthread_cond_init(&count_threshold_cv, NULL);
 	patient_list = NULL;
@@ -116,20 +117,23 @@ int main(int argc, char *argv[]) {
 	strcpy(node->name, "alberto");
 	node-> triageNum = 123;
 	node-> attendanceNum = 12;
-	node-> triagems = 10;
+	node-> triagems = 20;
 	node-> attendancems = 20;
-	node-> priority = 1;
-	node->start = clock();
+	node-> priority = 2;
+	clock_gettime(CLOCK_REALTIME, &tp);
+	node->start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 	node->next = NULL;
 	patient_list = node;
+
 	node = malloc(sizeof(Patient));
 	strcpy(node->name, "frederico");
 	node-> triageNum = 123;
 	node-> attendanceNum = 12;
-	node-> triagems = 12;
+	node-> triagems = 11;
 	node-> attendancems = 20;
 	node-> priority = 1;
-	node->start = clock();
+	clock_gettime(CLOCK_REALTIME, &tp);
+	node->start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 
 	node->next = NULL;
 	patient_list->next= node;
@@ -152,10 +156,15 @@ int main(int argc, char *argv[]) {
 
 	create_triages(triage);
 	create_doctors(doctors, shift_length);
-	printf("\nTotal Triaged: %d\n", (*shared_var).total_triage);
-	printf("\nTotal Treated: %d\n\n", (*shared_var).total_treated);
-
+	printf("[shared_var] Total Triaged: %d\n", (*shared_var).total_triage);
+	printf("[shared_var] Total Treated: %d\n", (*shared_var).total_treated);
+	printf("[shared_var] average [before triage]: %f\n", (*shared_var).average_before_triage);
+	printf("[shared_var] average [after_triage]: %f\n", (*shared_var).average_after_triage);
+	printf("[shared_var] average [all]: %f\n", (*shared_var).average_all);
 
 	shmctl(shmid, IPC_RMID, NULL);
+	int i;
+	for(i = 0; i<triage; i++)
+		pthread_join(triage_threads[i], NULL);
 	return 0;
 }

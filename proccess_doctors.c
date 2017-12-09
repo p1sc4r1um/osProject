@@ -6,28 +6,37 @@ void kill_proc() {
 }
 
 void doctor (int shift_length) {
+	struct timespec tp;
 	MQ_patient patient;
 	double time_patient, total_time;
 	signal(SIGALRM, kill_proc);
-	ualarm(shift_length, 0);
-	clock_t start = clock();
-	//double shift_time = (double)(end - start) / CLOCKS_PER_SEC;
-	printf("I am doctor %ld and started at %f\n", (long)getpid(), (double) start / CLOCKS_PER_SEC);
+	ualarm(shift_length * 1000,0);
+	//clock_gettime(CLOCK_REALTIME, &tp);
+	//double start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
+	printf("[doctor] I am doctor %ld\n", (long)getpid());
  	//while (((int)shift_time < shift_length)) {
-	while(1) {	
-		signal(SIGALRM, SIG_IGN);
+	while(1) {
+		//signal(SIGALRM, SIG_IGN);
+
 		msgrcv(MQ_id, &patient, sizeof(MQ_patient)-sizeof(long), -3, 0);
-		current->begin_attendance = clock();
-		usleep(current->attendancems);
-		clock_t end = clock();
-		//shift_time = (double)(end - start) / CLOCKS_PER_SEC;
-		time_patient = 1.0 * (current->begin_attendance - current->end_triage)/CLOCKS_PER_SEC;
+		printf("[doctor] Doctor [%ld] going to treat %s\n",(long)getpid(),patient.info.name);
+		clock_gettime(CLOCK_REALTIME, &tp);
+		patient.info.begin_attendance = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
+
+		usleep(patient.info.attendancems*1000);
+
+		clock_gettime(CLOCK_REALTIME, &tp);
+		double end = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
+
+		time_patient = 1.0 * (patient.info.begin_attendance - patient.info.end_triage);
+		total_time = 1.0* (end - patient.info.start);
 	 	sem_wait(mutex);
 		(*shared_var).total_treated++;
-		(*shared_var).average_after_triage = ((*shared_var).average_after_triage * ((*shared_var).total_treated-1)) + (time_patient * 1000)/(*shared_var).total_treated;
-		total_time = 1.0* (end - current->start)/CLOCKS_PER_SEC;
-	 	(*shared_var).average_all = ((*shared_var).average_all * ((*shared_var).total_treated-1)) + (total_time * 1000)/(*shared_var).total_treated; 
+		(*shared_var).average_after_triage = (double)((*shared_var).average_after_triage * ((*shared_var).total_treated-1) + ((double)(1.0*time_patient)))/(*shared_var).total_treated;
+	 	(*shared_var).average_all = (double)((*shared_var).average_all * ((*shared_var).total_treated-1) + ((double)(1.0*total_time)))/(*shared_var).total_treated;
 		sem_post(mutex);
+
+
 
 	 //printf("total treated: %d\n", (*shared_var).total_treated);
 		signal(SIGALRM, kill_proc);
@@ -42,16 +51,10 @@ void doctor (int shift_length) {
 }
 
 void create_doctors (int doctors, int shift_length) {
-
     int i;
     for (i = 0; i < doctors; i++) {
         if (fork() == 0) {
-            #ifdef DEBUG
-            printf("DOCTOR - creating one doctor.....\n");
-            #endif
-
             doctor(shift_length);
-            exit(0);
         }
     }
     while (/*get patient*/false) {
