@@ -63,6 +63,7 @@ void force_exit() {
 			pthread_join(triage_threads[i], NULL);
 		}
 	}*/
+	msgctl(MQ_id, IPC_RMID, NULL);
 	sem_close(mutex);
 	wait(NULL);
 	shmctl(shmid, IPC_RMID, NULL);
@@ -70,6 +71,7 @@ void force_exit() {
 }
 
 void* read_named_pipe () {
+	create_MQ();
 	//Creates the named pipe if it doesn't exist yet
 	if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
 		perror("Cannot create pipe: ");
@@ -86,9 +88,11 @@ void* read_named_pipe () {
 	node = (ListP) malloc(sizeof(Patient));
 	while (1) {
 		read(fd, node, sizeof(Patient));
+		node->start = clock();
 		node->next = NULL;
 		put_in_list(node);
-		printf("client %s was put in the list!\n", node->name);
+		printf("client %s was put in the list by the pipe!\n", node->name);
+		pthread_cond_signal(&count_threshold_cv);
 	}
 }
 
@@ -108,6 +112,28 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	//pthread_join(triage_read_pipe, NULL);
+	ListP node = malloc(sizeof(Patient));
+	strcpy(node->name, "alberto");
+	node-> triageNum = 123;
+	node-> attendanceNum = 12;
+	node-> triagems = 10;
+	node-> attendancems = 20;
+	node-> priority = 1;
+	node->start = clock();
+	node->next = NULL;
+	patient_list = node;
+	node = malloc(sizeof(Patient));
+	strcpy(node->name, "frederico");
+	node-> triageNum = 123;
+	node-> attendanceNum = 12;
+	node-> triagems = 12;
+	node-> attendancems = 20;
+	node-> priority = 1;
+	node->start = clock();
+
+	node->next = NULL;
+	patient_list->next= node;
+
 
 	//read file
 	if(read_config(&triage, &doctors, &shift_length, &mq_max)) {

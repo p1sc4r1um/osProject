@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/msg.h>
 
 /*STRUCTS*/
 
@@ -31,9 +32,14 @@ typedef struct patient {
 	ListP next;
 }Patient;
 
+typedef struct {
+	long priority;
+	Patient info;
+}MQ_patient;
 
 typedef struct stats {
-	int total_triage, total_treated, average_before_triage, average_after_triage, average_all;
+	int total_triage, total_treated;
+	double average_before_triage, average_after_triage, average_all;
 }Stats;
 
 //#define DEBUG
@@ -47,7 +53,7 @@ pthread_t triage_read_pipe;
 sem_t *mutex;
 pthread_mutex_t mutex_threads;
 pthread_cond_t count_threshold_cv;
-
+int MQ_id;
 
 /*FUNCTIONS*/
 void force_exit();
@@ -60,6 +66,7 @@ int create_triages(int triage);
 
 void doctor(int shift_length);
 void create_doctors(int doctors, int shift_length);
-
+void create_MQ();
+void add_to_MQ(Patient patient);
 
 #endif

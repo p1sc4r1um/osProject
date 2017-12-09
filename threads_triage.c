@@ -7,28 +7,35 @@
 
 void *triage_work(void* id_ptr) {
 	ListP current = patient_list;
+	double time_patient;
 	int id = *((int*)id_ptr);
 	printf("New triage %d\n", id);
 	while(1) {
-		printf("erterterter\n");
 		pthread_mutex_lock(&mutex_threads);
 		if(patient_list != NULL){
-			printf("xau\n");
 			current = patient_list;
+			current->begin_triage = clock();
 			patient_list = patient_list->next;
 			current->next = NULL;
 			pthread_mutex_unlock(&mutex_threads);
-			sleep(current->triagems);
+			usleep(current->triagems);
 			sem_wait(mutex);
-			printf("patient %s triaged\n", current->name);
+			add_to_MQ(*current);
 			(*shared_var).total_triage++;
+			time_patient = 1.0* (current->begin_triage - current->start)/CLOCKS_PER_SEC;
+			printf("inicio %s: %ld\n", current->name, current->start);
+			printf("inicio %s: %ld\n", current->name, current->begin_triage);
+			printf("tempo %s: %f\n", current->name, (double)time_patient);
+			(*shared_var).average_before_triage = (double)((*shared_var).average_before_triage * ((*shared_var).total_triage-1) + (time_patient * 1000))/(*shared_var).total_triage;
 			sem_post(mutex);
+			printf("patient %s triaged by triage %d\n", current->name, id);
+
 		}
 		else {
-			printf("skah\n");
 			pthread_mutex_unlock(&mutex_threads);
 			pthread_cond_wait(&count_threshold_cv,&mutex_threads);
-			printf("fshdsf\n");
+			pthread_mutex_unlock(&mutex_threads);
+
 		}
 	}
 }
