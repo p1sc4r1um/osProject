@@ -56,14 +56,19 @@ typedef struct {
 typedef struct stats {
 	int total_triage, total_treated;
 	double average_before_triage, average_after_triage, average_all;
+	bool there_is_extra_doctor;
+
 }Stats;
 
 //#define DEBUG
 
+size_t len_file;
+
+
 Stats *shared_var;
 int main_pid;
+int ids[30];
 int doctors, triage, shift_length, mq_max, shmid;
-int new_triage;
 ListP patient_list;
 pthread_t *triage_threads;
 pthread_t triage_read_pipe;
@@ -71,12 +76,15 @@ pthread_t thread_check_doctors;
 
 sem_t *mutex;
 sem_t *mutex_files;
+sem_t *mutex_extra_doctor;
 pthread_mutex_t mutex_threads;
 pthread_mutex_t mutex_threads2;
 pthread_cond_t new_pacient_signal;
 pthread_cond_t extra_doctor;
 int MQ_id;
 int offset;
+int num_of_triages;
+int triage_change;
 
 /*FUNCTIONS*/
 void force_exit();

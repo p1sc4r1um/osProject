@@ -46,7 +46,7 @@ int read_config(int *triage,int *doctors,int *shift_length,int *mq_max){
 	return 1;
   }
   else {
-    	perror("Error while reading the configuration file\n");
+    	perror("\033[91mError while reading the configuration file\n");
 	return 0;
   }
 }

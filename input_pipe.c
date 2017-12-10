@@ -39,10 +39,14 @@ int main(int argc, char *argv[]) {
 		perror ("usage: <first_name/numer_of_pacients> <triage_time_ms> <attendance_time_ms> <priority> or usage: <new_threads_number");
 		exit(1);
 	}
+	else if (atoi(argv[1]) < 1) {
+		perror("\033[91mnumber of thread must be greater than 0\n")
+		exit(1);
+	}
 	// Opens the pipe for writing
 	int fd;
 	if ((fd=open(PIPE_NAME, O_WRONLY)) < 0) {
-		perror("Cannot open pipe for writing: ");
+		perror("\033[91mCannot open pipe for writing: ");
 		exit(1);
 	}
 	if(argc == 5) {
@@ -76,7 +80,7 @@ int main(int argc, char *argv[]) {
 	}
 	else if(argc == 2) {
 		node = (ListP) malloc(sizeof(Patient));
-		
+
 		strcpy(node->name, "thread123");
 		node->triagems = atoi(argv[1]);
 		node->attendancems = -1;

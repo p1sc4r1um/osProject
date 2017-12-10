@@ -11,12 +11,13 @@ void kill_proc() {
 }
 
 void doctor (int shift_length) {
+	struct msqid_ds buf;
 	struct timespec tp;
 	char to_write[MAXBUFLEN];
 	char temp[10];
 	MQ_patient patient;
 	double time_patient, total_time;
-	signal(SIGALRM, kill_proc);
+
 	alarm(shift_length);
 	printf("[doctor] I am doctor %ld\n", (long)getpid());
 
@@ -32,14 +33,15 @@ void doctor (int shift_length) {
 	double shift_beginning = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 	double current_time = shift_beginning;
 	while(current_time-shift_beginning<shift_length) {
+		signal(SIGALRM, kill_proc);
 		msgrcv(MQ_id, &patient, sizeof(MQ_patient)-sizeof(long), -3, 0);
 		signal(SIGALRM, SIG_IGN);
 		printf("[doctor] Doctor [%ld] going to treat %s\n",(long)getpid(),patient.info.name);
 
 		clock_gettime(CLOCK_REALTIME, &tp);
 		patient.info.begin_attendance = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
-
-		usleep(patient.info.attendancems*1000);
+		printf("sleeping attendance length....... %d seconds\n\n", patient.info.attendancems);
+		sleep(patient.info.attendancems);
 		clock_gettime(CLOCK_REALTIME, &tp);
 		double end = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 
@@ -50,7 +52,15 @@ void doctor (int shift_length) {
 		(*shared_var).average_after_triage = (double)((*shared_var).average_after_triage * ((*shared_var).total_treated-1) + ((double)(1.0*time_patient)))/(*shared_var).total_treated;
 		(*shared_var).average_all = (double)((*shared_var).average_all * ((*shared_var).total_treated-1) + ((double)(1.0*total_time)))/(*shared_var).total_treated;
 		sem_post(mutex);
-		signal(SIGALRM, kill_proc);
+		printf("********************************Doctor %d has just treated %s\n", getpid(), patient.info.name);
+		sem_wait(mutex_extra_doctor);
+		msgctl(MQ_id, IPC_STAT, &buf);
+		if((*shared_var).there_is_extra_doctor && buf.msg_qnum < mq_max*0.8){
+			printf("\n###########exiting extra doctor.............\n");
+			(*shared_var).there_is_extra_doctor = false;
+			exit(0);
+		}
+		sem_post(mutex_extra_doctor);
 		alarm(shift_length);
 		clock_gettime(CLOCK_REALTIME, &tp);
 		double current_time = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
@@ -90,11 +100,12 @@ void create_doctors (int doctors, int shift_length) {
     }
 	}
 	if (pthread_create(&thread_check_doctors, NULL, doctors_after_shift, 0) != 0) {
-		perror("Error creating the thread!");
+		perror("\033[91mError creating the thread!");
 		exit(1);
 	}
 	while(1) {
 		pthread_cond_wait(&extra_doctor, &mutex_threads2);
+		(*shared_var).there_is_extra_doctor = true;
 		if (fork() == 0) {
 			printf("\n\n\n*******************DOCTOR - creating one additional doctor.....***********************\n\n\n");
 			doctor(shift_length);

@@ -14,6 +14,8 @@ int shared_memory_stats() {
     (*shared_var).average_after_triage = 0;
     (*shared_var).average_all = 0;
     (*shared_var).average_before_triage = 0;
+    (*shared_var).there_is_extra_doctor = false;
+
 
     #ifdef DEBUG
     printf("################## DEBUG ###################\n");
@@ -24,7 +26,7 @@ int shared_memory_stats() {
 
   }
   else {
-    perror("\nERROR IN CREATING MEMORY\n");
+    perror("\033[91m\nERROR IN CREATING MEMORY\n");
     return 0;
   }
 

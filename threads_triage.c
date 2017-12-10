@@ -3,6 +3,9 @@
 #include "header.h"
 
 
+void kill_thread() {
+	pthread_exit(NULL);
+}
 
 void *triage_work(void* id_ptr) {
 	struct msqid_ds buf;
@@ -13,6 +16,7 @@ void *triage_work(void* id_ptr) {
 	double time_patient;
 	int id = *(int*)id_ptr;
 	printf("[triage] New triage %d\n", id);
+	signal(SIGUSR2, kill_thread);
 	while(1) {
 		pthread_mutex_lock(&mutex_threads);
 		if(patient_list != NULL){
@@ -32,7 +36,7 @@ void *triage_work(void* id_ptr) {
 			patient_list = patient_list->next;
 			current->next = NULL;
 			pthread_mutex_unlock(&mutex_threads);
-			usleep(current->triagems*1000);
+			sleep(current->triagems);
 			sem_wait(mutex);
 			(*shared_var).total_triage++;
 			time_patient = (double)1.0*(current->begin_triage - current->start);
@@ -41,8 +45,8 @@ void *triage_work(void* id_ptr) {
 			current->end_triage = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 			add_to_MQ(*current);
 			msgctl(MQ_id, IPC_STAT, &buf);
-			printf("\n\n\n\n%ld\n\n\n\n",buf.msg_qnum);
-			if(buf.msg_qnum > mq_max) {
+			printf("\n\n\n\n\nnumber of patients waiting for doctor:%ld\n\n\n\n",buf.msg_qnum);
+			if(buf.msg_qnum > mq_max && !(*shared_var).there_is_extra_doctor) {
 				pthread_cond_signal(&extra_doctor);
 			}
 			sem_post(mutex);
@@ -73,7 +77,6 @@ void *triage_work(void* id_ptr) {
 }
 
 int create_triages(int triage) {
-	int ids[triage];
 	int i;
 
 // create threads client
@@ -82,7 +85,7 @@ int create_triages(int triage) {
 		ids[i] = i;
 		//printf("id:%d\n", ids[i]);
 		if (pthread_create(&triage_threads[i], NULL, triage_work, &ids[i]) != 0) {
-			perror("Error creating the thread!");
+			perror("\033[91mError creating the thread!");
 			exit(0);
 			return 1;
 		}

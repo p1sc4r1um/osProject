@@ -23,13 +23,13 @@ void put_in_list(ListP node) {
 
 
 void force_exit() {
-	if((msync(addr_mmf,offset,MS_SYNC)) < 0)
-		perror("Error in msync");
+	printf("\033[93m############exiting...######################\n\033[0m");
 
-	if( munmap(addr_mmf,offset) == -1)
-	 perror("Error in munmap");
+	msync(addr_mmf,offset,MS_SYNC);
+	munmap(addr_mmf,offset);
 	msgctl(MQ_id, IPC_RMID, NULL);
 	sem_close(mutex);
+	sem_close(mutex_files);
 	shmctl(shmid, IPC_RMID, NULL);
 	exit(0);
 }
@@ -44,16 +44,17 @@ void print_stats() {
 }
 
 void* read_named_pipe () {
-	create_MQ();
+	int i;
+	int new_triage;
 	//Creates the named pipe if it doesn't exist yet
 	if ((mkfifo(PIPE_NAME, O_CREAT|O_EXCL|0600)<0) && (errno!= EEXIST)) {
-		perror("Cannot create pipe: ");
+		perror("\033[91mCannot create pipe: ");
 		exit(0);
 	}
 	//Opens the pipe for reading
 	int fd;
 	if ((fd=open(PIPE_NAME, O_RDWR)) < 0) {
-		perror("Cannot open pipe for reading: ");
+		perror("\033[91mCannot open pipe for reading: ");
 		exit(0);
 	}
 
@@ -70,11 +71,27 @@ void* read_named_pipe () {
 		}
 		else {
 			new_triage = node->triagems;
+			triage_change = new_triage - num_of_triages;
+			for (i = 0; i < triage_change; i++) {
+				 ids[num_of_triages] = num_of_triages;
+				 printf("\nextra thread\n");
+				if (pthread_create(&triage_threads[num_of_triages], NULL, triage_work, &ids[num_of_triages]) != 0) {
+					perror("\033[91mError creating the thread!");
+					exit(1);
+				}
+				num_of_triages++;
+			}
+			for(i = 0; i>triage_change; i--) {
+				printf("\nkilling thread\n");
+				  pthread_kill(triage_threads[num_of_triages-1], SIGUSR2);
+					num_of_triages--;
+			}
 		}
 	}
 }
 
 int main(int argc, char *argv[]) {
+	create_MQ();
 	create_MMF();
 	main_pid = getpid();
 	printf("main pid: %d\n", main_pid);
@@ -90,12 +107,13 @@ int main(int argc, char *argv[]) {
 	sem_unlink("memory_mutex");
 	mutex = sem_open("memory_mutex", O_CREAT, 777, 1);
 	sem_unlink("file_mutex");
-	mutex_files = sem_open("file_mutex", O_CREAT, 777, 1);
-
+	mutex_files = sem_open("file_mutex", O_CREAT|O_EXCL, 777, 1);
+	sem_unlink("extra_doctors");
+	mutex_extra_doctor = sem_open("extra_doctors", O_CREAT|O_EXCL, 777, 1);
 
 	//create thread to read input_pipe
 	if (pthread_create(&triage_read_pipe, NULL, read_named_pipe, 0) != 0) {
-		perror("Error creating the thread!");
+		perror("\033[91mError creating the thread!");
 		exit(0);
 		return 1;
 	}
@@ -104,8 +122,8 @@ int main(int argc, char *argv[]) {
 	strcpy(node->name, "alberto");
 	node-> triageNum = 123;
 	node-> attendanceNum = 12;
-	node-> triagems = 20;
-	node-> attendancems = 20;
+	node-> triagems = 1;
+	node-> attendancems = 5;
 	node-> priority = 2;
 	clock_gettime(CLOCK_REALTIME, &tp);
 	node->start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
@@ -116,8 +134,8 @@ int main(int argc, char *argv[]) {
 	strcpy(node->name, "frederico");
 	node-> triageNum = 123;
 	node-> attendanceNum = 12;
-	node-> triagems = 11;
-	node-> attendancems = 20;
+	node-> triagems = 1;
+	node-> attendancems = 9;
 	node-> priority = 1;
 	clock_gettime(CLOCK_REALTIME, &tp);
 	node->start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
@@ -131,17 +149,18 @@ int main(int argc, char *argv[]) {
 		printf("%d, %d, %d, %d\n", triage, doctors, shift_length, mq_max);
 	}
 	else {
-		perror("Error while reading the configuration file\n");
+		perror("\033[91mError while reading the configuration file\n");
 		return 0;
 	}
-
+	num_of_triages = triage;
 	//create shared memory
 	if(!(shmid = shared_memory_stats())) {
-		perror("Error while creating shared memory\n");
+		perror("\033[91mError while creating shared memory\n");
 		return 0;
 	}
 	signal(SIGUSR1, print_stats);
 	create_triages(triage);
+	sleep(7);
 	create_doctors(doctors, shift_length);
 
 
