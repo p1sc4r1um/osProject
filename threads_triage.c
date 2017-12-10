@@ -1,4 +1,3 @@
-// Compile as: gcc store_solution.c -lpthread -D_REENTRANT -Wall -o store
 
 #include "header.h"
 
@@ -10,12 +9,15 @@ void kill_thread() {
 void *triage_work(void* id_ptr) {
 	struct msqid_ds buf;
 	char to_write[MAXBUFLEN];
-	char temp[10];
 	struct timespec tp;
 	ListP current = patient_list;
 	double time_patient;
 	int id = *(int*)id_ptr;
-	printf("[triage] New triage %d\n", id);
+	printf("\033[93m[triage] New triage %d\n\033[0m", id);
+	sprintf(to_write, "New triage %d", id);
+	sem_wait(mutex_files);
+	write_to_mmf(to_write, strlen(to_write));
+	sem_post(mutex_files);
 	signal(SIGUSR2, kill_thread);
 	while(1) {
 		pthread_mutex_lock(&mutex_threads);
@@ -23,10 +25,7 @@ void *triage_work(void* id_ptr) {
 			current = patient_list;
 			clock_gettime(CLOCK_REALTIME, &tp);
 			current->begin_triage = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
-			sprintf(temp, "%d", id);
-			strcpy(to_write, "Triage ");
-			strcat(to_write, temp);
-			strcat(to_write, " started triage of ");
+			sprintf(to_write, "Triage %d started triage of ", id);
 			strcat(to_write, current->name);
 			strcat(to_write, "\n");
 			sem_wait(mutex_files);
@@ -45,14 +44,12 @@ void *triage_work(void* id_ptr) {
 			current->end_triage = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 			add_to_MQ(*current);
 			msgctl(MQ_id, IPC_STAT, &buf);
-			printf("\n\n\n\n\nnumber of patients waiting for doctor:%ld\n\n\n\n",buf.msg_qnum);
+			printf("\033[1m\n\nnumber of patients waiting for doctor:%ld\n\n\033[0m",buf.msg_qnum);
 			if(buf.msg_qnum > mq_max && !(*shared_var).there_is_extra_doctor) {
 				pthread_cond_signal(&extra_doctor);
 			}
 			sem_post(mutex);
-			strcpy(to_write, "Triage ");
-			strcat(to_write, temp);
-			strcat(to_write, " finished triage of ");
+			sprintf(to_write, "Triage %d ended triage of ", id);
 			strcat(to_write, current->name);
 			strcat(to_write, "\n");
 			sem_wait(mutex_files);
@@ -62,10 +59,10 @@ void *triage_work(void* id_ptr) {
 
 
 			#ifdef DEBUG
-			printf("################## DEBUG ###################\n");
+			printf("\033[4m################## DEBUG ###################\n");
 			printf("name: %s\n",  current->name);
 			printf("EPOCH->patient creation: %f\nEPOCH->triage starts\nEPOCH->triage ends\nPacient creation->triage starts: %f\n", current->start, current->begin_triage,current->end_triage ,time_patient);
-			printf("################## DEBUG END ###################\n");
+			printf("################## DEBUG END ###################\n\033[0m");
 			#endif
 		}
 		else {
@@ -83,18 +80,11 @@ int create_triages(int triage) {
 
 	for (i = 0; i < triage; i++) {
 		ids[i] = i;
-		//printf("id:%d\n", ids[i]);
 		if (pthread_create(&triage_threads[i], NULL, triage_work, &ids[i]) != 0) {
 			perror("\033[91mError creating the thread!");
 			exit(0);
 			return 1;
 		}
 	}
-
-// wait until all threads triage finish
-
-	/*for (i = 0; i < triage; i++) {
-		pthread_join(triage_threads[i], NULL);
-	}*/
 	return 0;
 }

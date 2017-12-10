@@ -35,12 +35,12 @@ void force_exit() {
 }
 
 void print_stats() {
-	printf("\n\n#################STATS#################\n\n");
+	printf("\n\n\033[92m#################STATS#################\n\n");
 	printf("[shared_var] Total Triaged: %d\n", (*shared_var).total_triage);
 	printf("[shared_var] Total Treated: %d\n", (*shared_var).total_treated);
 	printf("[shared_var] average [before triage]: %f\n", (*shared_var).average_before_triage);
 	printf("[shared_var] average [after_triage]: %f\n", (*shared_var).average_after_triage);
-	printf("[shared_var] average [all]: %f\n\n", (*shared_var).average_all);
+	printf("[shared_var] average [all]: %f\n\n\033[0m", (*shared_var).average_all);
 }
 
 void* read_named_pipe () {
@@ -74,7 +74,7 @@ void* read_named_pipe () {
 			triage_change = new_triage - num_of_triages;
 			for (i = 0; i < triage_change; i++) {
 				 ids[num_of_triages] = num_of_triages;
-				 printf("\nextra thread\n");
+				 printf("\033[92m\nextra thread\n\033[0m");
 				if (pthread_create(&triage_threads[num_of_triages], NULL, triage_work, &ids[num_of_triages]) != 0) {
 					perror("\033[91mError creating the thread!");
 					exit(1);
@@ -82,7 +82,7 @@ void* read_named_pipe () {
 				num_of_triages++;
 			}
 			for(i = 0; i>triage_change; i--) {
-				printf("\nkilling thread\n");
+				printf("\033[91m\nkilling thread\n\033[0m");
 				  pthread_kill(triage_threads[num_of_triages-1], SIGUSR2);
 					num_of_triages--;
 			}

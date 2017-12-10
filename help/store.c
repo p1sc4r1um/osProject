@@ -70,7 +70,7 @@ int main(void) {
   	for (i = 0; i<N_CLIENTS; i++){
 		ids[i] = i;
 		if(pthread_create(&my_thread[i], NULL, generate_requests, &ids[i])!=0){
-			perror("Error creating the thread!");
+			perror("\033[91mError creating the thread!");
 			exit(0);
 		}
 	}	

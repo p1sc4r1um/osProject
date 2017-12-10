@@ -75,14 +75,14 @@ void write_to_mmf (char* buffer, int buffer_size) {
   len = len_file;
   len_file += buffer_size;
 
-  /*if ((addr = mremap(addr, len, len_file, MREMAP_MAYMOVE)) == MAP_FAILED) {
+  if ((addr = mremap(addr, len, len_file, MREMAP_MAYMOVE)) == MAP_FAILED) {
       perror("\033[91mError extending mapping");
       return EXIT_FAILURE;
-  }*/
-  /*if (ftruncate(fd_mmf, len_file) != 0){
+  }
+  if (ftruncate(fd_mmf, len_file) != 0){
       perror("\033[91mError extending file");
       perror(1);
   }
   memcpy(addr_mmf+len, buffer, len_file - len);
-  printf( "Val:%s\n",addr_mmf ) ;*/ //Checking purpose
+  printf( "Val:%s\n",addr_mmf ) ; //Checking purpose*/
 }
