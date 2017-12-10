@@ -18,13 +18,18 @@ void doctor (int shift_length) {
 	//clock_gettime(CLOCK_REALTIME, &tp);
 	//double start = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
 	printf("[doctor] I am doctor %ld\n", (long)getpid());
-	sprintf(temp, "%d", getpid());
+	/*sprintf(temp, "%d", getpid());
 	strcpy(to_write, "Process ");
 	strcat(to_write, temp);
 	strcat(to_write, "started.\n");
+	sem_wait(mutex_files);
 	write_to_mmf(to_write, strlen(to_write));
+	sem_post(mutex_files);*/
  	//while (((int)shift_time < shift_length)) {
-	while(1) {
+	clock_gettime(CLOCK_REALTIME, &tp);
+	double shift_beginning = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
+	double current_time = shift_beginning;
+	while(current_time-shift_beginning<shift_length) {
 		msgrcv(MQ_id, &patient, sizeof(MQ_patient)-sizeof(long), -3, 0);
 		signal(SIGALRM, SIG_IGN);
 		printf("[doctor] Doctor [%ld] going to treat %s\n",(long)getpid(),patient.info.name);
@@ -53,6 +58,9 @@ void doctor (int shift_length) {
 		 printf("DOCTOR - average_after_triage: %d\n", (*shared_var).average_after_triage);
 		 printf("DOCTOR - average_all: %d\n", (*shared_var).average_all);
 		#endif
+		clock_gettime(CLOCK_REALTIME, &tp);
+		double current_time = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
+
 	}
 }
 

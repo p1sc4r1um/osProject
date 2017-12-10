@@ -2,7 +2,6 @@
 
 #include "header.h"
 
-// sync resources
 
 
 void *triage_work(void* id_ptr) {
@@ -25,7 +24,9 @@ void *triage_work(void* id_ptr) {
 			strcat(to_write, "started triage of ");
 			strcat(to_write, current->name);
 			strcat(to_write, "\n");
+			sem_wait(mutex_files);
 			write_to_mmf(to_write, strlen(to_write));
+			sem_post(mutex_files);
 			clock_gettime(CLOCK_REALTIME, &tp);
 			patient_list = patient_list->next;
 			current->next = NULL;
@@ -34,6 +35,7 @@ void *triage_work(void* id_ptr) {
 			sem_wait(mutex);
 			(*shared_var).total_triage++;
 			time_patient = (double)1.0*(current->begin_triage - current->start);
+			printf("time_patient: %f\n", time_patient);
 			(*shared_var).average_before_triage = (double)((*shared_var).average_before_triage * ((*shared_var).total_triage-1) + ((double)(1.0*time_patient)))/(*shared_var).total_triage;
 			clock_gettime(CLOCK_REALTIME, &tp);
 			current->end_triage = tp.tv_sec + ((double)1.0*tp.tv_nsec)/1000000000;
@@ -49,7 +51,9 @@ void *triage_work(void* id_ptr) {
 			strcat(to_write, "finished triage of ");
 			strcat(to_write, current->name);
 			strcat(to_write, "\n");
+			sem_wait(mutex_files);
 			write_to_mmf(to_write, strlen(to_write));
+			sem_post(mutex_files);
 			printf("[triage] patient %s triaged by triage %d. elapsed time during triage: %f seconds\n", current->name, id, 1.0*(current->end_triage-current->begin_triage));
 		}
 		else {

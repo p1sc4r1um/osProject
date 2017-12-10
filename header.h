@@ -66,6 +66,7 @@ pthread_t triage_read_pipe;
 pthread_t thread_check_doctors;
 
 sem_t *mutex;
+sem_t *mutex_files;
 pthread_mutex_t mutex_threads;
 pthread_mutex_t mutex_threads2;
 pthread_cond_t new_pacient_signal;
