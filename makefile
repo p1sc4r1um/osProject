@@ -1,9 +1,9 @@
 ############################# Makefile ##########################
 CC = gcc
 CFLAGS =	-pthread -D_REENTRANT -Wall -g
-all:	 main.o proccess_doctors.o read_config.o shared_memory_stats.o threads_triage.o message_queue.o header.h
+all:	 main.o proccess_doctors.o read_config.o shared_memory_stats.o threads_triage.o message_queue.o memory_mapped_file.o header.h
 
-	$(CC)	$(CFLAGS)	-o	exe main.o proccess_doctors.o read_config.o shared_memory_stats.o threads_triage.o message_queue.o
+	$(CC)	$(CFLAGS)	-o	exe main.o proccess_doctors.o read_config.o shared_memory_stats.o threads_triage.o message_queue.o memory_mapped_file.o
 main.o: main.c header.h
 	$(CC) $(CFLAGS) -c main.c
 #menu.o: menu.c header.h
@@ -18,6 +18,8 @@ threads_triage.o: threads_triage.c header.h
 	$(CC) $(CFLAGS) -c threads_triage.c
 message_queue.o: message_queue.c header.h
 	$(CC) $(CFLAGS) -c message_queue.c
+memory_mapped_file.o: memory_mapped_file.c header.h
+	$(CC) $(CFLAGS) -c memory_mapped_file.c
 
 clean:
 	rm -rf *.o

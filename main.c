@@ -51,23 +51,35 @@ void put_in_list(ListP node) {
 	}
 	else {
 		patient_list = node;
-		pthread_cond_signal(&count_threshold_cv);
+		pthread_cond_signal(&new_pacient_signal);
 	}
 }
 
 
 void force_exit() {
-	int i;
-	/*if(getpid() == main_pid) {
+		/*if(getpid() == main_pid) {
 		for (i = 0; i < triage; i++) {
 			pthread_join(triage_threads[i], NULL);
 		}
 	}*/
+	if((msync(addr_mmf,offset,MS_SYNC)) < 0)
+			 perror("Error in msync");
+
+	 if( munmap(addr_mmf,offset) == -1)
+			 perror("Error in munmap");
 	msgctl(MQ_id, IPC_RMID, NULL);
 	sem_close(mutex);
 	wait(NULL);
 	shmctl(shmid, IPC_RMID, NULL);
 	exit(0);
+}
+void print_stats() {
+	printf("\n\n#################STATS#################\n\n");
+	printf("[shared_var] Total Triaged: %d\n", (*shared_var).total_triage);
+	printf("[shared_var] Total Treated: %d\n", (*shared_var).total_treated);
+	printf("[shared_var] average [before triage]: %f\n", (*shared_var).average_before_triage);
+	printf("[shared_var] average [after_triage]: %f\n", (*shared_var).average_after_triage);
+	printf("[shared_var] average [all]: %f\n\n", (*shared_var).average_all);
 }
 
 void* read_named_pipe () {
@@ -92,15 +104,21 @@ void* read_named_pipe () {
 		node->next = NULL;
 		put_in_list(node);
 		printf("client %s was put in the list by the pipe!\n", node->name);
-		pthread_cond_signal(&count_threshold_cv);
+		pthread_cond_signal(&new_pacient_signal);
 	}
 }
 
 int main(int argc, char *argv[]) {
+	create_MMF();
 	main_pid = getpid();
+	printf("main pid: %d\n", main_pid);
 	struct timespec tp;
 	pthread_mutex_init(&mutex_threads, NULL);
-	pthread_cond_init(&count_threshold_cv, NULL);
+	pthread_mutex_init(&mutex_threads2, NULL);
+
+
+	pthread_cond_init(&new_pacient_signal, NULL);
+	pthread_cond_init(&extra_doctor, NULL);
 	patient_list = NULL;
 	signal(SIGINT,force_exit);
 	sem_unlink("memory_mutex");
@@ -153,14 +171,10 @@ int main(int argc, char *argv[]) {
 		perror("Error while creating shared memory\n");
 		return 0;
 	}
-
+	signal(SIGUSR1, print_stats);
 	create_triages(triage);
 	create_doctors(doctors, shift_length);
-	printf("[shared_var] Total Triaged: %d\n", (*shared_var).total_triage);
-	printf("[shared_var] Total Treated: %d\n", (*shared_var).total_treated);
-	printf("[shared_var] average [before triage]: %f\n", (*shared_var).average_before_triage);
-	printf("[shared_var] average [after_triage]: %f\n", (*shared_var).average_after_triage);
-	printf("[shared_var] average [all]: %f\n", (*shared_var).average_all);
+
 
 	shmctl(shmid, IPC_RMID, NULL);
 	int i;
