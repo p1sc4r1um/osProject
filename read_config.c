@@ -38,7 +38,9 @@ int read_config(int *triage,int *doctors,int *shift_length,int *mq_max){
       bool1 = 0;
     }
     #ifdef DEBUG
+    printf("##################### DEBUG #######################\n");
     printf("READINFO: triage: %ls, doctors: %ls, shift_length: %ls, mq_max: %ls\n",triage,doctors,shift_length,mq_max);
+    printf("################## DEBUG END ###################\n");
     #endif
 	fclose(f);
 	return 1;

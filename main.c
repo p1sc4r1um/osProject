@@ -1,8 +1,12 @@
 #include "header.h"
 
-/*	TODO: corrigir mmf
+/*
+		TODO: corrigir mmf
 		TODO: criar processo quando numero de pacientes>MQ_MAX
-		TODO: Comando para alterar numero de triagens */
+		TODO: Comando para alterar numero de triagens
+*/
+
+
 void put_in_list(ListP node) {
 	ListP temp = patient_list;
 	if(temp != NULL) {
@@ -19,22 +23,17 @@ void put_in_list(ListP node) {
 
 
 void force_exit() {
-		/*if(getpid() == main_pid) {
-		for (i = 0; i < triage; i++) {
-			pthread_join(triage_threads[i], NULL);
-		}
-	}*/
 	if((msync(addr_mmf,offset,MS_SYNC)) < 0)
-			 perror("Error in msync");
+		perror("Error in msync");
 
-	 if( munmap(addr_mmf,offset) == -1)
-			 perror("Error in munmap");
+	if( munmap(addr_mmf,offset) == -1)
+	 perror("Error in munmap");
 	msgctl(MQ_id, IPC_RMID, NULL);
 	sem_close(mutex);
-	wait(NULL);
 	shmctl(shmid, IPC_RMID, NULL);
 	exit(0);
 }
+
 void print_stats() {
 	printf("\n\n#################STATS#################\n\n");
 	printf("[shared_var] Total Triaged: %d\n", (*shared_var).total_triage);
@@ -62,11 +61,16 @@ void* read_named_pipe () {
 	node = (ListP) malloc(sizeof(Patient));
 	while (1) {
 		read(fd, node, sizeof(Patient));
-		node->start = time(NULL);
-		node->next = NULL;
-		put_in_list(node);
-		printf("client %s was put in the list by the pipe!\n", node->name);
-		pthread_cond_signal(&new_pacient_signal);
+		if(strcmp(node->name,"thread123") != 0) {
+			node->start = time(NULL);
+			node->next = NULL;
+			put_in_list(node);
+			printf("client %s was put in the list by the pipe!\n", node->name);
+			pthread_cond_signal(&new_pacient_signal);
+		}
+		else {
+			new_triage = node->triagems;
+		}
 	}
 }
 
@@ -89,7 +93,7 @@ int main(int argc, char *argv[]) {
 	mutex_files = sem_open("file_mutex", O_CREAT, 777, 1);
 
 
-	//create tread to read input_pipe
+	//create thread to read input_pipe
 	if (pthread_create(&triage_read_pipe, NULL, read_named_pipe, 0) != 0) {
 		perror("Error creating the thread!");
 		exit(0);

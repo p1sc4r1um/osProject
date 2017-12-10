@@ -1,5 +1,8 @@
 #ifndef HEADER_H_INCLUDED
 #define HEADER_H_INCLUDED
+
+//#define DEBUG
+
 /**/
 #define FILEMODE S_IRWXU | S_IRGRP | S_IROTH
 #define LOG_FILE_NAME   "log_file.log"
@@ -28,8 +31,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/msg.h>
-#include<sys/mman.h>
-#include<fcntl.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 
 
@@ -60,6 +63,7 @@ typedef struct stats {
 Stats *shared_var;
 int main_pid;
 int doctors, triage, shift_length, mq_max, shmid;
+int new_triage;
 ListP patient_list;
 pthread_t *triage_threads;
 pthread_t triage_read_pipe;
@@ -73,6 +77,7 @@ pthread_cond_t new_pacient_signal;
 pthread_cond_t extra_doctor;
 int MQ_id;
 int offset;
+
 /*FUNCTIONS*/
 void force_exit();
 void* read_named_pipe();

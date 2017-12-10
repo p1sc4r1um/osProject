@@ -14,4 +14,10 @@ void add_to_MQ(Patient patient) {
     exit(1);
   }
   printf("[mq] %s added to MQ!\n", new_node.info.name);
+  #ifdef DEBUG
+  printf("##################### DEBUG #######################\n");
+  printf("MQ - pacient name: %s\n", new_node.info.name);
+  printf("MQ - pacient priority: %ld\n", new_node.priority);
+  printf("################## DEBUG END ###################\n");
+  #endif
 }

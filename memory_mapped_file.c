@@ -33,4 +33,9 @@ void create_MMF()
 void write_to_mmf (char* buffer, int buffer_size) {
   memcpy(addr_mmf + offset, buffer, buffer_size);
   offset += buffer_size;
+  #ifdef DEBUG
+  printf("##################### DEBUG #######################\n");
+  printf("MMF - buffer: %s\nMMF - offset: %d\n", buffer, offset);
+  printf("################## DEBUG END ###################\n");
+  #endif
 }
